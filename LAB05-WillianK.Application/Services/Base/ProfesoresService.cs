@@ -1,41 +1,62 @@
+using LAB05_WillianK.Application.Dtos.Matriculas;
 using LAB05_WillianK.Application.Dtos.Profesores;
 using LAB05_WillianK.Domain.Entities;
 using LAB05_WillianK.Domain.Interfaces;
+using Mapster;
 
 namespace LAB05_WillianK.Application.Services.Base;
-
-public class ProfesoresService : 
-    ServiceBase<Profesores, ProfesoresGetDto, ProfesoresPostDto, ProfesoresPutDto>, 
-    IProfesoresService
+/*
+ * Servicio convencional -> sin usar servicio base y usando mapster
+ */
+public class ProfesoresService : IProfesoresService
 {
-    public ProfesoresService(IUnitOfWork unitOfWork) : base(unitOfWork) {}
+    private readonly IUnitOfWork _unitOfWork;
 
-
-    public override Profesores MapToEntity(ProfesoresPostDto dto)
+    public ProfesoresService(IUnitOfWork unitOfWork)
     {
-        return new Profesores
-        {
-            Nombre = dto.Nombre,
-            Especialidad = dto.Especialidad,
-            Correo = dto.Correo
-        };
+        _unitOfWork = unitOfWork;
     }
 
-    public override ProfesoresGetDto MapToGetDto(Profesores entity)
+    public async Task<IEnumerable<ProfesoresGetDto>> GetAll()
     {
-        return new ProfesoresGetDto
-        {
-            IdProfesor = entity.IdProfesor,
-            Nombre = entity.Nombre,
-            Especialidad = entity.Especialidad,
-            Correo = entity.Correo
-        };
+        var profesores = await _unitOfWork.Repository<Profesores>().GetAll();
+        var profesoresDto = profesores.Adapt<IEnumerable<ProfesoresGetDto>>();
+        return profesoresDto;
     }
 
-    public override void MapUpdate(Profesores entity, ProfesoresPutDto dto)
+    public async Task<ProfesoresGetDto> GetById(int id)
     {
-        entity.Nombre = dto.Nombre;
-        entity.Especialidad = dto.Especialidad;
-        entity.Correo = dto.Correo;
+        var profesor = await _unitOfWork.Repository<Profesores>().GetById(id);
+        return profesor.Adapt<ProfesoresGetDto>();
     }
+
+    public async Task<ProfesoresGetDto> Add(ProfesoresPostDto profesoresDto)
+    {
+        var profesor = profesoresDto.Adapt<Profesores>();
+        await _unitOfWork.Repository<Profesores>().Add(profesor);
+        await _unitOfWork.Complete();
+        return profesor.Adapt<ProfesoresGetDto>();
+    }
+
+    public async Task<bool> Update(int id, ProfesoresPutDto profesoresDto)
+    {
+        var profesor = await _unitOfWork.Repository<Profesores>().GetById(id);
+        if (profesor == null) 
+            return false;
+        profesoresDto.Adapt(profesor); // mapster actualizar datos
+        await _unitOfWork.Repository<Profesores>().Update(profesor);
+        await _unitOfWork.Complete();
+        return true;
+    }
+
+    public async Task<bool> Delete(int id)
+    {
+        var deleted = await _unitOfWork.Repository<Profesores>().Delete(id);
+        if (!deleted) 
+            return false;
+        await _unitOfWork.Complete();
+        return true;
+        
+    }
+    
 }

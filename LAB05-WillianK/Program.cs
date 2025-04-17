@@ -3,12 +3,14 @@ using LAB05_WillianK.Application.Services.Base;
 using LAB05_WillianK.Domain.Interfaces;
 using LAB05_WillianK.Infrastructure.Data;
 using LAB05_WillianK.Infrastructure.Repositories;
+using Mapster;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
 // Obtener la cadena de conexión desde appsettings.json
 var connectionString = builder.Configuration.GetConnectionString(
     "DefaultConnection");
@@ -16,21 +18,26 @@ var connectionString = builder.Configuration.GetConnectionString(
 builder.Services.AddDbContext<ApplicationDbContext>(options => 
     options.UseNpgsql(connectionString));
 
+// instalacion swagger 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// inyectar mapster
+builder.Services.AddMapster();
+
 
 // inyectar repositorios
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // inyectar servicios
 builder.Services.AddScoped<IAsistenciasService, AsistenciasService>();
-
-
+builder.Services.AddScoped<ICursosService, CursosService>();
+builder.Services.AddScoped<IEstudiantesService, EstudiantesService>();
+builder.Services.AddScoped<IEvaluacionesService, EvaluacionesService>();
+builder.Services.AddScoped<IMateriasService, MateriasService>();
+builder.Services.AddScoped<IMatriculasService, MatriculasService>();
 builder.Services.AddScoped<IProfesoresService, ProfesoresService>();
 
-// inyectar servicios
-
-// instalacion swagger 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 // app construida
 var app = builder.Build();
